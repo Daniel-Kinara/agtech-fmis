@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut
 } from "lucide-react"
+import { ModeToggle } from './mode-toggle'
 
 const routes = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", color: "text-sky-500" },
@@ -67,6 +68,10 @@ export function Sidebar() {
             <LogOut className="h-5 w-5 mr-3" />
             Logout
          </div>
+         <div className="px-3 py-2 border-t border-zinc-800 flex items-center justify-between">
+          <div className="text-sm font-medium text-zinc-400">Appearance</div>
+            <ModeToggle />
+          </div>
       </div>
     </div>
   )
