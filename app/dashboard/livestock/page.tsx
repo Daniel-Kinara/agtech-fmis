@@ -28,6 +28,7 @@ interface Livestock {
   species: string
   breed: string
   status: string
+  weight: number | null
   created_at: string
 }
 
@@ -121,6 +122,9 @@ export default function LivestockPage() {
                         <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-800">
                           {animal.status}
                         </span>
+                        <TableCell className="text-right font-mono">
+                        {animal.weight ? `${animal.weight} kg` : "-"}
+                        </TableCell>
                       </TableCell>
                       <TableCell className="text-right">
                         {new Date(animal.created_at).toLocaleDateString()}
