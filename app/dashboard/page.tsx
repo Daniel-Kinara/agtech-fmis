@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { 
@@ -121,7 +122,9 @@ export default function SmartFarmDashboard() {
               Maize prices in <span className="text-white font-bold">Nairobi (Muthurwa Market)</span> have peaked at <span className="text-emerald-400 font-bold">Ksh 5,200</span> per 90kg bag. Selling now through the D2C Marketplace could increase your margin by <span className="underline decoration-emerald-500 underline-offset-4">18%</span> compared to local brokers.
             </p>
             <button className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 active:scale-95">
+              <Link href="/dashboard/prices">
               List on Marketplace
+              </Link>
             </button>
           </div>
           {/* Decorative design element */}
