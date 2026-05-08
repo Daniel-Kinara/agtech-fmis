@@ -29,7 +29,7 @@ export default function DashboardLayout({
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-slate-200">
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-green-700 tracking-tight">FarmSync</h2>
+          <h2 className="text-2xl font-bold text-green-700 tracking-tight">SmartFarm</h2>
         </div>
         <nav className="flex-1 px-4 space-y-2">
           {navItems.map((item) => (
@@ -55,7 +55,7 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Header */}
         <header className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-green-700">FarmSync</h2>
+          <h2 className="text-xl font-bold text-green-700">SmartFarm</h2>
           <Button variant="outline" size="icon">
             <Menu size={20} />
           </Button>
