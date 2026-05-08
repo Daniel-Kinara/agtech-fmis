@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
+import { AddLivestockForm } from "@/components/add-livestock-form"
 import { Plus, Table as TableIcon, Activity, Database } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
@@ -62,9 +63,7 @@ export default function LivestockPage() {
         <div className="flex items-center justify-between space-y-2">
           <h2 className="text-3xl font-bold tracking-tight">Livestock Inventory</h2>
           <div className="flex items-center space-x-2">
-            <Button className="bg-emerald-600 hover:bg-emerald-700">
-              <Plus className="mr-2 h-4 w-4" /> Add Livestock
-            </Button>
+            <AddLivestockForm onRefresh={() => window.location.reload()} />
           </div>
         </div>
 
