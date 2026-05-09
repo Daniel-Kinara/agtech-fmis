@@ -13,7 +13,8 @@ import {
   Wallet,
   Settings,
   LogOut,
-  History
+  History,
+  ArrowRightLeft
 } from "lucide-react"
 import { ModeToggle } from './mode-toggle'
 
@@ -25,6 +26,7 @@ const routes = [
   { label: "Market Prices", icon: LineChart, href: "/dashboard/prices", color: "text-blue-600" },
   { label: "Marketplace", icon: Store, href: "/dashboard/marketplace", color: "text-purple-500" },
   { label: "Financials", icon: Wallet, href: "/dashboard/analytics", color: "text-emerald-600" },
+  { label: "Mixed Farming", icon: ArrowRightLeft,href: "/dashboard/mixed",color: "text-amber-500" },
 ]
 
 export function Sidebar() {
