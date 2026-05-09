@@ -1,90 +1,116 @@
 "use client"
 
-import React, { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Sprout, Map as MapIcon, Calendar, Droplets } from "lucide-react"
+import React, { useEffect, useState, useCallback } from "react"
+import { Loader2, Sprout, Plus, ChevronRight, Map } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-// Mock data for farm parcels
-const parcels = [
-  { id: "P1", name: "North Field", crop: "Maize", health: 85, status: "Growing" },
-  { id: "P2", name: "East Sector", crop: "Wheat", health: 92, status: "Mature" },
-  { id: "P3", name: "South Block", crop: "Potatoes", health: 40, status: "Pest Alert" },
-  { id: "P4", name: "West Side", crop: "Fallow", health: 100, status: "Idle" },
-]
+interface Field {
+  id: string
+  name: string
+  size_acres: number
+  soil_type: string
+  current_crop: string
+  status: string
+}
 
 export default function CropsPage() {
-  const [selectedParcel, setSelectedParcel] = useState(parcels[0])
+  const [fields, setFields] = useState<Field[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchFields = useCallback(async () => {
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from("fields")
+        .select("*")
+        .order("name", { ascending: true })
+
+      if (error) throw error
+      setFields(data || [])
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchFields() }, [fetchFields])
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <MapIcon className="text-emerald-700" /> Digital Farm Map
-        </h1>
-        <p className="text-slate-500">Monitor parcel health and predictive yield analytics.</p>
+    <div className="flex-col flex p-8 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Crop Management</h2>
+          <p className="text-muted-foreground text-sm">Track field usage and seasonal cycles.</p>
+        </div>
+        <Button className="bg-emerald-600 hover:bg-emerald-700">
+          <Plus className="mr-2 h-4 w-4" /> Add New Field
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Side: The Interactive Map Grid */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl border shadow-sm">
-          <div className="grid grid-cols-2 gap-4 aspect-video sm:aspect-square md:aspect-video">
-            {parcels.map((parcel) => (
-              <div 
-                key={parcel.id}
-                onClick={() => setSelectedParcel(parcel)}
-                className={`relative rounded-lg border-4 cursor-pointer transition-all flex flex-col items-center justify-center p-4
-                  ${selectedParcel.id === parcel.id ? 'border-emerald-600 bg-emerald-50' : 'border-slate-100 bg-slate-50 hover:border-emerald-200'}
-                `}
-              >
-                <Sprout className={parcel.health < 50 ? "text-red-500" : "text-emerald-600"} />
-                <span className="font-bold mt-2">{parcel.name}</span>
-                <Badge variant="outline" className="mt-1">{parcel.crop}</Badge>
-                
-                {/* Health Indicator bar */}
-                <div className="absolute bottom-2 left-2 right-2 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full ${parcel.health < 50 ? 'bg-red-500' : 'bg-emerald-500'}`} 
-                    style={{ width: `${parcel.health}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Side: Parcel Details & Predictive Analytics */}
-        <div className="space-y-6">
-          <Card className="border-emerald-100">
-            <CardHeader>
-              <CardTitle className="text-xl">Parcel Details: {selectedParcel.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500 flex items-center gap-2"><Sprout size={16} /> Current Crop</span>
-                <span className="font-semibold">{selectedParcel.crop}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500 flex items-center gap-2"><Calendar size={16} /> Est. Harvest</span>
-                <span className="font-semibold text-emerald-700">Nov 2026</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500 flex items-center gap-2"><Droplets size={16} /> Soil Moisture</span>
-                <span className="font-semibold text-blue-600">42%</span>
-              </div>
-              
-              <hr className="my-4" />
-              
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <h4 className="text-sm font-bold text-slate-700 mb-1">Predictive Yield</h4>
-                <p className="text-2xl font-bold">4.2 Tons/Ha</p>
-                <p className="text-xs text-slate-500">+12% vs last season</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Land</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {fields.reduce((acc, f) => acc + (f.size_acres || 0), 0)} Acres
+            </div>
+          </CardContent>
+        </Card>
+        {/* Add more stats cards here as needed */}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Field Inventory</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-10"><Loader2 className="animate-spin" /></div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Field Name</TableHead>
+                  <TableHead>Current Crop</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {fields.map((field) => (
+                  <TableRow key={field.id} className="cursor-pointer group">
+                    <TableCell className="font-bold flex items-center gap-2">
+                      <Map className="h-4 w-4 text-slate-400" /> {field.name}
+                    </TableCell>
+                    <TableCell>
+                      <span className="flex items-center gap-1">
+                        <Sprout className="h-3 w-3 text-emerald-500" /> {field.current_crop || "Empty"}
+                      </span>
+                    </TableCell>
+                    <TableCell>{field.size_acres} Ac</TableCell>
+                    <TableCell>
+                      <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 uppercase">
+                        {field.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 transition-colors" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
