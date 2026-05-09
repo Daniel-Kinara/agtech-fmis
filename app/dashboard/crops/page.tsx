@@ -1,116 +1,223 @@
 "use client"
 
 import React, { useEffect, useState, useCallback } from "react"
-import { Loader2, Sprout, Plus, ChevronRight, Map } from "lucide-react"
+import { 
+  Loader2, 
+  Sprout, 
+  Map as MapIcon, 
+  ChevronRight, 
+  Layers, 
+  TrendingUp,
+  AlertCircle 
+} from "lucide-react"
 import { supabase } from "@/lib/supabase"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { AddFieldForm } from "@/components/add-field-form"
+import { FieldActivitySidebar } from "@/components/field-activity-sidebar"
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription 
+} from "@/components/ui/card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
+// Define the shape of our Field data
 interface Field {
   id: string
   name: string
   size_acres: number
   soil_type: string
-  current_crop: string
+  current_crop: string | null
   status: string
+  created_at: string
 }
 
 export default function CropsPage() {
   const [fields, setFields] = useState<Field[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  
+  // State for the Activity Sidebar
+  const [selectedField, setSelectedField] = useState<{id: string, name: string} | null>(null)
 
   const fetchFields = useCallback(async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
+      setError(null)
+      const { data, error: supabaseError } = await supabase
         .from("fields")
         .select("*")
         .order("name", { ascending: true })
 
-      if (error) throw error
+      if (supabaseError) throw supabaseError
       setFields(data || [])
     } catch (err) {
-      console.error(err)
+      const error = err as Error
+      setError(error.message || "Failed to load fields.")
     } finally {
       setLoading(false)
     }
   }, [])
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { fetchFields() }, [fetchFields])
+  useEffect(() => {
+    
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchFields()
+  }, [fetchFields])
+
+  // Calculate quick stats
+  const totalAcres = fields.reduce((acc, f) => acc + (Number(f.size_acres) || 0), 0)
+  const activeFields = fields.filter(f => f.status === 'Active').length
 
   return (
-    <div className="flex-col flex p-8 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Crop Management</h2>
-          <p className="text-muted-foreground text-sm">Track field usage and seasonal cycles.</p>
+    <div className="flex-col flex min-h-screen bg-slate-50/30">
+      <div className="flex-1 space-y-4 p-8 pt-6">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900">Crop Management</h2>
+            <p className="text-sm text-muted-foreground">Monitor field cycles, soil health, and harvests.</p>
+          </div>
+          <AddFieldForm onRefresh={fetchFields} />
         </div>
-        <Button className="bg-emerald-600 hover:bg-emerald-700">
-          <Plus className="mr-2 h-4 w-4" /> Add New Field
-        </Button>
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Land</CardTitle>
+        {/* Stats Row */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Land Size</CardTitle>
+              <Layers className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalAcres.toFixed(2)} Acres</div>
+            </CardContent>
+          </Card>
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Crops</CardTitle>
+              <Sprout className="h-4 w-4 text-emerald-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeFields} Plots</div>
+            </CardContent>
+          </Card>
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Average Plot Size</CardTitle>
+              <TrendingUp className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {fields.length > 0 ? (totalAcres / fields.length).toFixed(1) : 0} Ac
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Fields Table */}
+        <Card className="shadow-sm border-slate-200">
+          <CardHeader>
+            <CardTitle>Field Registry</CardTitle>
+            <CardDescription>Click a row to view activity history or log new actions.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {fields.reduce((acc, f) => acc + (f.size_acres || 0), 0)} Acres
-            </div>
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
+                <p className="text-slate-500 font-medium">Fetching field data...</p>
+              </div>
+            ) : fields.length === 0 ? (
+              <div className="text-center py-20 border-2 border-dashed rounded-xl border-slate-200">
+                <p className="text-slate-400">No fields registered yet. Use the button above to add your first plot.</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50/50">
+                    <TableHead className="font-semibold">Field Name</TableHead>
+                    <TableHead className="font-semibold">Current Crop</TableHead>
+                    <TableHead className="font-semibold">Soil Type</TableHead>
+                    <TableHead className="font-semibold text-right">Size</TableHead>
+                    <TableHead className="font-semibold text-center">Status</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {fields.map((field) => (
+                    <TableRow 
+                      key={field.id} 
+                      className="cursor-pointer hover:bg-slate-50/80 transition-colors group"
+                      onClick={() => setSelectedField({ id: field.id, name: field.name })}
+                    >
+                      <TableCell className="font-bold text-slate-700">
+                        <div className="flex items-center gap-2">
+                          <MapIcon className="h-4 w-4 text-slate-400" />
+                          {field.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {field.current_crop ? (
+                          <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-100 flex w-fit items-center gap-1">
+                            <Sprout className="h-3 w-3" />
+                            {field.current_crop}
+                          </Badge>
+                        ) : (
+                          <span className="text-slate-400 text-xs italic">Fallow / Empty</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-slate-600">{field.soil_type}</TableCell>
+                      <TableCell className="text-right font-mono text-slate-600">
+                        {Number(field.size_acres).toFixed(1)} Ac
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-2">
+                          <div className={`h-2 w-2 rounded-full ${
+                            field.status === 'Active' ? 'bg-emerald-500 animate-pulse' : 
+                            field.status === 'Preparation' ? 'bg-blue-400' : 'bg-slate-300'
+                          }`} />
+                          <span className="text-[10px] font-bold uppercase tracking-tight">
+                            {field.status}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
-        {/* Add more stats cards here as needed */}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Field Inventory</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center py-10"><Loader2 className="animate-spin" /></div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Field Name</TableHead>
-                  <TableHead>Current Crop</TableHead>
-                  <TableHead>Size</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {fields.map((field) => (
-                  <TableRow key={field.id} className="cursor-pointer group">
-                    <TableCell className="font-bold flex items-center gap-2">
-                      <Map className="h-4 w-4 text-slate-400" /> {field.name}
-                    </TableCell>
-                    <TableCell>
-                      <span className="flex items-center gap-1">
-                        <Sprout className="h-3 w-3 text-emerald-500" /> {field.current_crop || "Empty"}
-                      </span>
-                    </TableCell>
-                    <TableCell>{field.size_acres} Ac</TableCell>
-                    <TableCell>
-                      <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 uppercase">
-                        {field.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 transition-colors" />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {/* Activity Sidebar Component */}
+      <FieldActivitySidebar 
+        fieldId={selectedField?.id || ""} 
+        fieldName={selectedField?.name || ""}
+        isOpen={!!selectedField}
+        onClose={() => setSelectedField(null)}
+      />
     </div>
   )
 }
