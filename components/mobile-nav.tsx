@@ -26,7 +26,11 @@ export function MobileNav() {
     <Sheet>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu className="h-6 w-6" />
+          <div className="flex flex-col gap-1.5 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group">
+          <div className="h-0.5 w-6 bg-slate-900 dark:bg-slate-100 rounded-full transition-all group-hover:w-4" />
+          <div className="h-0.5 w-6 bg-slate-900 dark:bg-slate-100 rounded-full transition-all" />
+          <div className="h-0.5 w-6 bg-slate-900 dark:bg-slate-100 rounded-full transition-all group-hover:w-5" />
+        </div>
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="p-0 bg-[#111827] border-none w-72">
