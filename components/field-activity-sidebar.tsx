@@ -16,8 +16,8 @@ interface Activity {
   cost: number
 }
 
-export function FieldActivitySidebar({ fieldId, fieldName, isOpen, onClose }: { 
-  fieldId: string, fieldName: string, isOpen: boolean, onClose: () => void 
+export function FieldActivitySidebar({ fieldId, fieldName, isOpen, onClose, onFieldUpdate }: { 
+  fieldId: string, fieldName: string, isOpen: boolean, onClose: () => void , onFieldUpdate: () => void
 }) {
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(false)
@@ -77,7 +77,11 @@ export function FieldActivitySidebar({ fieldId, fieldName, isOpen, onClose }: {
         <ScrollArea className="h-[calc(100vh-120px)] mt-6 pr-4">
           <div className="space-y-8">
             {/* Form to log new activity */}
-            <LogActivityForm fieldId={fieldId} onRefresh={fetchActivities} />
+            <LogActivityForm fieldId={fieldId} onRefresh={() => {
+                  fetchActivities(); // Updates the timeline in sidebar
+                  onFieldUpdate();   // Updates the main table in background
+                }} 
+              />
             
             <div className="space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">Timeline</h4>

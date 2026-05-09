@@ -51,6 +51,9 @@ export function LogActivityForm({ fieldId, onRefresh }: LogActivityFormProps) {
         .from("fields")
         .update(updateData)
         .eq("id", fieldId)
+        if(!fieldError){
+          onRefresh();
+        }
 
       if (fieldError) throw fieldError
 

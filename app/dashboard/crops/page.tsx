@@ -8,7 +8,8 @@ import {
   ChevronRight, 
   Layers, 
   TrendingUp,
-  AlertCircle 
+  AlertCircle, 
+  Trash2
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { AddFieldForm } from "@/components/add-field-form"
@@ -74,6 +75,28 @@ export default function CropsPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchFields()
   }, [fetchFields])
+  const deleteField = async (e: React.MouseEvent, id: string, name: string) => {
+  // Prevent the row click (which opens the sidebar) from firing
+  e.stopPropagation();
+
+  if (!confirm(`Are you sure you want to delete "${name}"? This will also remove all its activity history.`)) return;
+
+  try {
+    const { error } = await supabase
+      .from("fields")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+
+    // Update local state to remove the field from the UI
+    setFields(prev => prev.filter(f => f.id !== id));
+    
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    alert("Error deleting field: " + err.message);
+  }
+};
 
   // Calculate quick stats
   const totalAcres = fields.reduce((acc, f) => acc + (Number(f.size_acres) || 0), 0)
@@ -200,6 +223,13 @@ export default function CropsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        <button 
+                          onClick={(e) => deleteField(e, field.id, field.name)}
+                          className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-md transition-all opacity-0 group-hover:opacity-100"
+                          title="Delete Field"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                         <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
                       </TableCell>
                     </TableRow>
@@ -217,6 +247,8 @@ export default function CropsPage() {
         fieldName={selectedField?.name || ""}
         isOpen={!!selectedField}
         onClose={() => setSelectedField(null)}
+        
+        onFieldUpdate={fetchFields}
       />
     </div>
   )
