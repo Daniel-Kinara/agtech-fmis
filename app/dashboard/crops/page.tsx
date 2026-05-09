@@ -18,6 +18,7 @@ export default function CropsPage() {
   const [totalHarvest, setTotalHarvest] = useState(0)
   const [loading, setLoading] = useState(true)
   const [selectedField, setSelectedField] = useState<{id: string, name: string} | null>(null)
+  
 
   const fetchData = useCallback(async () => {
     try {
