@@ -73,6 +73,7 @@ export default function CropsPage() {
   }, [])
 
   useEffect(() => {
+    
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData()
   }, [fetchData])
@@ -106,26 +107,33 @@ export default function CropsPage() {
 
   return (
     <div className="flex-col flex min-h-screen bg-slate-50/30">
-      <div className="flex-1 space-y-4 p-8 pt-6">
+      {/* 
+          Responsiveness: 
+          - Changed p-8 to p-4 (mobile) and md:p-8 (desktop)
+          - Header uses flex-col on mobile, flex-row on desktop
+      */}
+      <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
         
         {/* Header Section */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900">Crop Management</h2>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Crop Management</h2>
             <p className="text-sm text-muted-foreground">Monitor field cycles, soil health, and total production.</p>
           </div>
-          <AddFieldForm onRefresh={fetchData} />
+          <div className="w-full sm:w-auto">
+            <AddFieldForm onRefresh={fetchData} />
+          </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Stats Row: grid-cols-1 on mobile, 2 on tablet, 4 on desktop */}
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="shadow-sm border-none bg-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xs font-bold uppercase text-slate-500">Total Land Size</CardTitle>
               <Layers className="h-4 w-4 text-slate-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-slate-900">{totalAcres.toFixed(2)} Acres</div>
+              <div className="text-xl md:text-2xl font-bold text-slate-900">{totalAcres.toFixed(2)} Acres</div>
             </CardContent>
           </Card>
 
@@ -135,7 +143,7 @@ export default function CropsPage() {
               <Sprout className="h-4 w-4 text-emerald-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-slate-900">{activeFields} Plots</div>
+              <div className="text-xl md:text-2xl font-bold text-slate-900">{activeFields} Plots</div>
             </CardContent>
           </Card>
 
@@ -145,7 +153,7 @@ export default function CropsPage() {
               <Wheat className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-slate-900">{totalHarvest.toLocaleString()} KGs</div>
+              <div className="text-xl md:text-2xl font-bold text-slate-900">{totalHarvest.toLocaleString()} KGs</div>
             </CardContent>
           </Card>
 
@@ -155,7 +163,7 @@ export default function CropsPage() {
               <TrendingUp className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-slate-900">
+              <div className="text-xl md:text-2xl font-bold text-slate-900">
                 {fields.length > 0 ? (totalAcres / fields.length).toFixed(1) : 0} Ac
               </div>
             </CardContent>
@@ -163,81 +171,91 @@ export default function CropsPage() {
         </div>
 
         {/* Field Registry Table */}
-        <Card className="shadow-sm border-none bg-white">
+        <Card className="shadow-sm border-none bg-white overflow-hidden">
           <CardHeader>
             <CardTitle className="text-lg font-bold text-slate-800">Field Registry</CardTitle>
             <p className="text-xs text-slate-500">Click a row to view activity history or log new actions.</p>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[250px]">Field Name</TableHead>
-                  <TableHead>Current Crop</TableHead>
-                  <TableHead>Soil Type</TableHead>
-                  <TableHead>Size</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-[100px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {fields.map((field) => (
-                  <TableRow 
-                    key={field.id} 
-                    className="cursor-pointer group transition-colors hover:bg-slate-50/50"
-                    onClick={() => setSelectedField({ id: field.id, name: field.name })}
-                  >
-                    <TableCell className="font-bold text-slate-700">
-                      <div className="flex items-center gap-2">
-                        <MapIcon className="h-4 w-4 text-slate-400" />
-                        {field.name}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {field.current_crop ? (
-                        <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-100">
-                          {field.current_crop}
-                        </Badge>
-                      ) : (
-                        <span className="text-slate-400 text-xs italic">Fallow / Empty</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-slate-600">{field.soil_type}</TableCell>
-                    <TableCell className="text-slate-600 font-medium">{field.size_acres} Ac</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className={cn(
-                          "h-2 w-2 rounded-full",
-                          field.status === 'Active' ? "bg-emerald-500 animate-pulse" : 
-                          field.status === 'Preparation' ? "bg-blue-500" : "bg-slate-300"
-                        )} />
-                        <span className="text-[10px] font-bold uppercase tracking-tighter">
-                          {field.status}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={(e) => deleteField(e, field.id, field.name)}
-                          className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-md transition-all opacity-0 group-hover:opacity-100"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                        <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </TableCell>
+          <CardContent className="p-0 sm:p-6 sm:pt-0">
+            {/* 
+                Responsiveness: 
+                - Added overflow-x-auto to allow horizontal scrolling of the table on small screens 
+            */}
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-[200px] md:w-[250px]">Field Name</TableHead>
+                    <TableHead>Current Crop</TableHead>
+                    <TableHead className="hidden md:table-cell">Soil Type</TableHead>
+                    <TableHead>Size</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[100px]"></TableHead>
                   </TableRow>
-                ))}
-                {fields.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-slate-400 italic">
-                      No fields found. Click &quot;Add New Field&quot; to begin.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {fields.map((field) => (
+                    <TableRow 
+                      key={field.id} 
+                      className="cursor-pointer group transition-colors hover:bg-slate-50/50"
+                      onClick={() => setSelectedField({ id: field.id, name: field.name })}
+                    >
+                      <TableCell className="font-bold text-slate-700">
+                        <div className="flex items-center gap-2">
+                          <MapIcon className="h-4 w-4 text-slate-400 shrink-0" />
+                          <span className="truncate">{field.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {field.current_crop ? (
+                          <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-100 whitespace-nowrap">
+                            {field.current_crop}
+                          </Badge>
+                        ) : (
+                          <span className="text-slate-400 text-[10px] md:text-xs italic">Fallow</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-slate-600 hidden md:table-cell">
+                        {field.soil_type}
+                      </TableCell>
+                      <TableCell className="text-slate-600 font-medium whitespace-nowrap">
+                        {field.size_acres} Ac
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className={cn(
+                            "h-2 w-2 rounded-full shrink-0",
+                            field.status === 'Active' ? "bg-emerald-500 animate-pulse" : 
+                            field.status === 'Preparation' ? "bg-blue-500" : "bg-slate-300"
+                          )} />
+                          <span className="text-[10px] font-bold uppercase tracking-tighter">
+                            {field.status}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1 md:gap-2">
+                          <button 
+                            onClick={(e) => deleteField(e, field.id, field.name)}
+                            className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-md transition-all md:opacity-0 md:group-hover:opacity-100"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                          <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {fields.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-32 text-center text-slate-400 italic">
+                        No fields found. Click &quot;Add New Field&quot; to begin.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 
