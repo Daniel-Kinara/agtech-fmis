@@ -54,7 +54,7 @@ export function AddTreatmentForm({ animalId, onRefresh }: AddTreatmentFormProps)
   }
 
   return (
-    <div className="relative p-4 border rounded-xl bg-slate-50 border-slate-200 shadow-sm animate-in fade-in zoom-in duration-200">
+    <div className="relative p-4 border rounded-xl bg-slate-900/20 border-slate-200 shadow-sm animate-in fade-in zoom-in duration-200">
       <button 
         onClick={() => setShowForm(false)}
         className="absolute right-2 top-2 text-slate-400 hover:text-slate-600"

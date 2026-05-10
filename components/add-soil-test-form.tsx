@@ -49,7 +49,7 @@ export function AddSoilTestForm({ fieldId, onRefresh }: { fieldId: string, onRef
   }
 
   return (
-    <div className="relative p-4 border rounded-xl bg-white shadow-inner animate-in fade-in zoom-in duration-200">
+    <div className="relative p-4 border rounded-xl bg-slate-900/20 shadow-inner animate-in fade-in zoom-in duration-200">
       <button onClick={() => setShowForm(false)} className="absolute right-2 top-2 text-slate-400 hover:text-slate-600">
         <X className="h-4 w-4" />
       </button>

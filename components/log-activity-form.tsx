@@ -65,7 +65,7 @@ export function LogActivityForm({ fieldId, onRefresh }: LogActivityFormProps) {
   return (
     <div className={cn(
       "transition-all duration-300 ease-in-out border border-slate-100 overflow-hidden",
-      showForm ? "rounded-[1.2rem] bg-white shadow-lg p-4" : "rounded-full bg-slate-50/80 p-1.5 pr-4"
+      showForm ? "rounded-[1.2rem] bg-slate-900/20 shadow-lg p-4" : "rounded-full bg-slate-50/80 p-1.5 pr-4"
     )}>
       
       {/* Ultra-Compact Trigger Bar */}

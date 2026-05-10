@@ -60,16 +60,16 @@ export function LogSynergyForm({ onRefresh }: { onRefresh: () => void }) {
         <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
           <Button 
             type="button"
-            variant="ghost" 
-            className={`flex-1 h-9 text-xs rounded-lg transition-all ${transferType === 'Fodder' ? 'bg-white shadow-sm' : ''}`} 
+            variant="secondary" 
+            className={`flex-1 h-9 text-xs rounded-lg transition-all ${transferType === 'Fodder' ? 'bg-black shadow-sm' : ''}`} 
             onClick={() => setTransferType('Fodder')}
           >
             <Leaf className="mr-2 h-3.5 w-3.5 text-emerald-500" /> Fodder
           </Button>
           <Button 
             type="button"
-            variant="ghost" 
-            className={`flex-1 h-9 text-xs rounded-lg transition-all ${transferType === 'Manure' ? 'bg-white shadow-sm' : ''}`} 
+            variant="secondary" 
+            className={`flex-1 h-9 text-xs rounded-lg transition-all ${transferType === 'Manure' ? 'bg-black shadow-sm' : ''}`} 
             onClick={() => setTransferType('Manure')}
           >
             <Beef className="mr-2 h-3.5 w-3.5 text-orange-500" /> Manure

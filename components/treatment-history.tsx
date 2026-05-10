@@ -17,9 +17,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Loader2, Syringe, History, AlertCircle } from "lucide-react"
+import { Loader2, Syringe, History, AlertCircle, Trash2, ShieldCheck } from "lucide-react"
 import { AddTreatmentForm } from "./add-treatment-form"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { cn } from "@/lib/utils"
 
 interface Treatment {
   id: string
@@ -44,12 +45,11 @@ export function TreatmentHistory({
 }: TreatmentHistoryProps) {
   const [treatments, setTreatments] = useState<Treatment[]>([])
   const [loading, setLoading] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch function wrapped in useCallback so it can be passed to the form
   const fetchTreatments = useCallback(async () => {
     if (!animalId) return
-    
     try {
       setLoading(true)
       setError(null)
@@ -62,106 +62,153 @@ export function TreatmentHistory({
       if (supabaseError) throw supabaseError
       setTreatments(data || [])
     } catch (err) {
-      const error = err as Error
-      setError(error.message)
+      setError((err as Error).message)
     } finally {
       setLoading(false)
     }
   }, [animalId])
 
-  // Trigger fetch when the sidebar opens
   useEffect(() => {
-    if (isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchTreatments()
-    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isOpen) fetchTreatments()
   }, [isOpen, fetchTreatments])
+
+  // EFFECTIVE DELETE HANDLER
+  async function handleDelete(id: string) {
+    try {
+      setDeletingId(id)
+      const { error: deleteError } = await supabase
+        .from("treatments")
+        .delete()
+        .eq("id", id)
+
+      if (deleteError) throw deleteError
+      
+      // Update local state immediately for a "snappy" feel
+      setTreatments((prev) => prev.filter((t) => t.id !== id))
+    } catch (err) {
+      console.error("Delete failed:", err)
+      setError("Failed to purge medical record. Please try again.")
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="sm:max-w-md w-full">
-        <SheetHeader className="pb-6 border-b">
-          <div className="flex items-center gap-2 text-emerald-600 mb-1">
-            <Syringe className="h-5 w-5" />
-            <span className="text-xs font-bold uppercase tracking-widest">Medical Log</span>
+      <SheetContent className="sm:max-w-md w-full bg-[#0a0b10] border-l border-white/5 p-0 text-white flex flex-col overflow-hidden">
+        
+        {/* Fixed Header */}
+        <div className="shrink-0 p-8 bg-slate-900/40 backdrop-blur-xl border-b border-white/5 z-10">
+          <div className="flex items-center gap-2 text-emerald-400 mb-3">
+            <Syringe className="h-4 w-4 fill-emerald-400/20" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Bio-Medical Telemetry</span>
           </div>
-          <SheetTitle className="text-2xl font-bold">Animal {animalTag}</SheetTitle>
-          <SheetDescription>
-            Record and track all vaccinations and medical interventions.
+          <SheetTitle className="text-3xl font-black tracking-tighter text-white">
+            Tag {animalTag}
+          </SheetTitle>
+          <SheetDescription className="text-[10px] text-slate-500 uppercase font-black tracking-widest mt-2 flex items-center gap-2">
+            <ShieldCheck className="h-3 w-3 text-emerald-500" />
+            Health Intervention Archive
           </SheetDescription>
-        </SheetHeader>
+        </div>
 
-        <ScrollArea className="h-[calc(100vh-180px)] pr-4 mt-6">
-          <div className="space-y-8">
-            {/* 1. Add New Treatment Form */}
-            <section className="space-y-3">
-              <h4 className="text-sm font-semibold flex items-center gap-2">
-                New Entry
-              </h4>
-              <AddTreatmentForm animalId={animalId} onRefresh={fetchTreatments} />
+        {/* Scrollable Log */}
+        <ScrollArea className="flex-1">
+          <div className="px-8 py-6 space-y-10">
+            
+            <section className="space-y-4">
+              <div className="flex items-center gap-3">
+                <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-500">Record Intervention</h4>
+                <div className="h-px flex-1 bg-white/5" />
+              </div>
+              <div className="bg-[#16181d] rounded-2xl p-4 border border-white/5 shadow-inner">
+                <AddTreatmentForm animalId={animalId} onRefresh={fetchTreatments} />
+              </div>
             </section>
 
-            {/* 2. Past History Table */}
-            <section className="space-y-4">
+            <section className="space-y-4 pb-12">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold flex items-center gap-2">
-                  <History className="h-4 w-4 text-slate-400" />
-                  Treatment History
+                <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                  <History className="h-3 w-3" /> Protocol Logs
                 </h4>
-                <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-500 font-bold">
-                  {treatments.length} RECORDS
+                <span className="text-[9px] bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded text-emerald-400 font-black">
+                  {treatments.length} UNITS
                 </span>
               </div>
 
               {error && (
-                <div className="p-3 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2 text-red-600 text-sm">
-                  <AlertCircle className="h-4 w-4" />
+                <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-2 text-rose-400 text-[10px] font-bold uppercase tracking-tight">
+                  <AlertCircle className="h-3.5 w-3.5" />
                   {error}
                 </div>
               )}
 
-              {loading && treatments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 space-y-3">
-                  <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
-                  <p className="text-xs text-slate-400">Loading history...</p>
-                </div>
-              ) : treatments.length === 0 ? (
-                <div className="text-center py-12 border border-dashed rounded-xl">
-                  <p className="text-sm text-slate-400">No medical history found.</p>
-                </div>
-              ) : (
-                <div className="rounded-md border border-slate-100 overflow-hidden">
-                  <Table>
-                    <TableHeader className="bg-slate-50">
+              <div className="rounded-2xl border border-white/5 bg-[#16181d]/50 overflow-hidden shadow-2xl">
+                <Table>
+                  <TableHeader className="bg-slate-900/60 border-b border-white/5">
+                    <TableRow className="hover:bg-transparent border-none">
+                      <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-500 py-3 pl-4">Date</TableHead>
+                      <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-500 py-3">Details</TableHead>
+                      <TableHead className="text-[9px] font-black uppercase tracking-widest text-slate-500 py-3 text-right">Dose</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading && treatments.length === 0 ? (
                       <TableRow>
-                        <TableHead className="text-[10px] font-bold">DATE</TableHead>
-                        <TableHead className="text-[10px] font-bold">MEDICINE</TableHead>
-                        <TableHead className="text-[10px] font-bold text-right">DOSAGE</TableHead>
+                        <TableCell colSpan={4} className="py-20 text-center">
+                          <Loader2 className="h-5 w-5 animate-spin text-emerald-500 mx-auto" />
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {treatments.map((t) => (
-                        <TableRow key={t.id} className="hover:bg-transparent">
-                          <TableCell className="text-xs text-slate-500 py-3">
-                            {new Date(t.treatment_date).toLocaleDateString(undefined, {
+                    ) : treatments.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="py-20 text-center text-[10px] font-black uppercase tracking-widest text-slate-600">
+                          Empty Log
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      treatments.map((t) => (
+                        <TableRow key={t.id} className="group border-b border-white/[0.02] hover:bg-white/[0.02] transition-colors">
+                          <TableCell className="text-[10px] font-bold text-slate-500 py-4 pl-4">
+                            {new Date(t.treatment_date).toLocaleDateString('en-US', {
                               month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
+                              day: 'numeric'
                             })}
                           </TableCell>
-                          <TableCell className="py-3">
-                            <div className="text-xs font-bold text-slate-700">{t.medicine_name}</div>
-                            <div className="text-[10px] text-slate-400 italic line-clamp-1">{t.reason}</div>
+                          <TableCell className="py-4">
+                            <div className="text-[11px] font-black text-slate-200 uppercase tracking-tight line-clamp-1">{t.medicine_name}</div>
+                            <div className="text-[9px] text-slate-500 font-bold uppercase line-clamp-1 mt-0.5">{t.reason}</div>
                           </TableCell>
-                          <TableCell className="text-right text-xs font-mono text-emerald-600 py-3">
-                            {t.dosage}
+                          <TableCell className="text-right py-4">
+                            <span className="text-[10px] font-mono font-black text-emerald-400">
+                              {t.dosage}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right py-4 pr-3">
+                            <button 
+                              onClick={() => handleDelete(t.id)}
+                              disabled={deletingId === t.id}
+                              className={cn(
+                                "p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50",
+                                deletingId === t.id 
+                                  ? "text-slate-400" 
+                                  : "text-slate-600 hover:text-rose-500 hover:bg-rose-500/10"
+                              )}
+                            >
+                              {deletingId === t.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                              )}
+                            </button>
                           </TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </section>
           </div>
         </ScrollArea>
