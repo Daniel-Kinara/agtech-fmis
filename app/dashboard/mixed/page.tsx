@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
+import { supabase } from "@/lib/supabase"
 import { MixedFarmingOverview } from "@/components/mixed-farming-overview"
 import { LogSynergyForm } from "@/components/log-synergy-form"
 import { 
@@ -14,17 +15,47 @@ import {
   Recycle, 
   Sparkles, 
   Info, 
-  ArrowRightLeft,
   ShieldCheck,
-  Zap
+  Zap,
+  Beef,
+  Sprout,
+  Loader2
 } from "lucide-react"
 
 export default function MixedFarmingPage() {
   const [refreshKey, setRefreshKey] = useState(0)
+  const [inventory, setInventory] = useState({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    crops: [] as any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    livestock: [] as any[],
+    loading: true
+  })
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1)
+    fetchInventory()
   }
+
+  const fetchInventory = async () => {
+    setInventory(prev => ({ ...prev, loading: true }))
+    
+    // FETCH REAL DATA: Targeting specific columns to populate the image_567842.png section
+    const [cropsRes, liveRes] = await Promise.all([
+      supabase.from("crops").select("id, crop_type, acreage, status"),
+      supabase.from("livestock").select("id, category, quantity, health_status")
+    ])
+
+    setInventory({
+      crops: cropsRes.data || [],
+      livestock: liveRes.data || [],
+      loading: false
+    })
+  }
+
+  useEffect(() => {
+    fetchInventory()
+  }, [])
 
   return (
     <div className="flex-col flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
@@ -48,15 +79,13 @@ export default function MixedFarmingPage() {
           </div>
         </div>
 
-        {/* Global Overview Stats & Recent Activity */}
+        {/* Global Overview Stats */}
         <div className="w-full">
             <MixedFarmingOverview key={refreshKey} />
         </div>
 
         {/* Intelligence Grid */}
         <div className="grid gap-6 grid-cols-1 md:grid-cols-7">
-          
-          {/* Sustainability Insights */}
           <Card className="md:col-span-4 border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden relative rounded-[2rem]">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500" />
             <CardHeader className="pb-2">
@@ -72,12 +101,10 @@ export default function MixedFarmingPage() {
             <CardContent className="space-y-6">
               <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 Your current data suggests that <span className="font-bold text-slate-900 dark:text-white underline decoration-emerald-500/30">Organic Integration</span> is 
-                reducing your dependence on external synthetic inputs. By recycling manure, you are improving 
-                the <span className="text-emerald-600 dark:text-emerald-400 font-bold">Cation Exchange Capacity (CEC)</span> of your soil 
-                while providing high-protein fodder for your livestock.
+                reducing your dependence on external synthetic inputs.
               </p>
               
-              <div className="flex items-center gap-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800/50 group hover:scale-[1.01] transition-transform">
+              <div className="flex items-center gap-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800/50">
                  <div className="bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm">
                     <ShieldCheck className="h-6 w-6 text-emerald-600" />
                  </div>
@@ -89,7 +116,6 @@ export default function MixedFarmingPage() {
             </CardContent>
           </Card>
 
-          {/* Resource Legend - Transformed into a "Flow Card" */}
           <Card className="md:col-span-3 border-none shadow-xl bg-white dark:bg-slate-900 overflow-hidden relative rounded-[2rem]">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500" />
             <CardHeader className="pb-2">
@@ -104,16 +130,69 @@ export default function MixedFarmingPage() {
                 <FlowItem color="bg-orange-500" label="Manure" route="Cows → Fields" />
                 <FlowItem color="bg-blue-500" label="Bedding" route="Crops → Barns" />
               </div>
-              
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
-                  <ArrowRightLeft className="h-3 w-3" />
-                  <span>Updates in real-time as logs are submitted</span>
-                </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* REAL-TIME ASSET REGISTRY: THE SECTION FROM image_567842.png */}
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+          {/* LIVESTOCK ASSETS */}
+          <Card className="border-none shadow-lg bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div className="space-y-1">
+                <CardTitle className="text-sm font-black uppercase tracking-tighter text-slate-400 flex items-center gap-2">
+                  <Beef className="h-4 w-4 text-orange-500" /> Livestock Inventory
+                </CardTitle>
+              </div>
+              {inventory.loading && <Loader2 className="h-4 w-4 animate-spin text-slate-500" />}
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 min-h-[80px]">
+                {!inventory.loading && inventory.livestock.length > 0 ? (
+                  inventory.livestock.map((live) => (
+                    <InventoryItem 
+                      key={live.id} 
+                      title={live.category} 
+                      value={`${live.quantity} Head`} 
+                      status={live.health_status} 
+                      color="text-orange-500" 
+                    />
+                  ))
+                ) : !inventory.loading ? (
+                  <p className="text-xs text-slate-500 italic p-2">No livestock data found.</p>
+                ) : null}
               </div>
             </CardContent>
           </Card>
 
+          {/* CROP ASSETS */}
+          <Card className="border-none shadow-lg bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div className="space-y-1">
+                <CardTitle className="text-sm font-black uppercase tracking-tighter text-slate-400 flex items-center gap-2">
+                  <Sprout className="h-4 w-4 text-emerald-500" /> Active Acreage
+                </CardTitle>
+              </div>
+              {inventory.loading && <Loader2 className="h-4 w-4 animate-spin text-slate-500" />}
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 min-h-[80px]">
+                {!inventory.loading && inventory.crops.length > 0 ? (
+                  inventory.crops.map((crop) => (
+                    <InventoryItem 
+                      key={crop.id} 
+                      title={crop.crop_type} 
+                      value={`${crop.acreage} Acres`} 
+                      status={crop.status} 
+                      color="text-emerald-500" 
+                    />
+                  ))
+                ) : !inventory.loading ? (
+                  <p className="text-xs text-slate-500 italic p-2">No crop data found.</p>
+                ) : null}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
@@ -132,4 +211,18 @@ function FlowItem({ color, label, route }: { color: string, label: string, route
             </span>
         </div>
     )
+}
+
+function InventoryItem({ title, value, status, color }: { title: string, value: string, status: string, color: string }) {
+  return (
+    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div>
+        <p className="text-sm font-black text-slate-900 dark:text-white uppercase">{title}</p>
+        <p className={`text-[10px] font-bold ${color} uppercase tracking-widest`}>{status}</p>
+      </div>
+      <div className="text-right">
+        <p className="text-lg font-black text-slate-900 dark:text-white">{value}</p>
+      </div>
+    </div>
+  )
 }

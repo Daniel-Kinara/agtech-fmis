@@ -1,138 +1,165 @@
 "use client"
 
-import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useEffect, useState } from "react"
 import { 
-  Search, 
+  Store, 
+  TrendingUp, 
   MapPin, 
-  ShieldCheck, 
-  Leaf, 
-  User, 
-  ShoppingBag 
+  ShoppingBag, 
+  ArrowRight,
+  Loader2,
+  Search,
+  Filter
 } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 
-const marketplaceItems = [
-{
-    id: 1,
-    name: "Dry White Maize (Grade 1)",
-    farmer: "Kiprono Farms",
-    location: "Eldoret, Uasin Gishu",
-    price: 5400,
-    unit: "90kg Bag",
-    stock: 45,
-    healthIndex: "98%",
-    harvestDate: "12 Oct 2026",
-    // Reliable image of high-quality shelled maize
-    image: "https://plus.unsplash.com/premium_photo-1675366068612-4f81985f36e4?auto=format&fit=crop&q=80&w=800",
-  },
-  {
-    id: 2,
-    name: "Fresh Red Onions",
-    farmer: "Mama Mboga Co-op",
-    location: "Karatina, Nyeri",
-    price: 140,
-    unit: "1kg",
-    stock: 200,
-    healthIndex: "95%",
-    harvestDate: "20 Oct 2026",
-    image: "https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&fit=crop&q=80&w=800",
-  }
-]
+interface MarketItem {
+  id: string
+  commodity: string
+  price: number
+  unit: string
+  market: string
+  trend: 'up' | 'down' | 'stable'
+  category: 'Crop' | 'Livestock'
+}
 
 export default function MarketplacePage() {
-  return (
-    <div className="space-y-8 pb-10">
-      {/* Search and Filter Header */}
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Digital Farmers Market</h1>
-          <p className="text-slate-500 font-medium">Buy direct, support farmers, and ensure food traceability.</p>
-        </div>
+  const [items, setItems] = useState<MarketItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+
+  useEffect(() => {
+    async function fetchMarketData() {
+      try {
+        // In a real production scenario, you would fetch from an API like:
+        // const res = await fetch('https://api.kenyamarkets.co.ke/v1/prices')
         
-        <div className="relative max-w-2xl">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
-          <Input 
-            placeholder="Search for produce (e.g. Maize, Avocado, Beef)..." 
-            className="pl-10 h-12 text-lg shadow-sm"
-          />
+        // Simulating the API response with local Kenyan market data
+        const mockData: MarketItem[] = [
+          { id: '1', commodity: 'Dry Maize', price: 5200, unit: '90kg Bag', market: 'Nairobi', trend: 'up', category: 'Crop' },
+          { id: '2', commodity: 'Grade 1 Beef', price: 550, unit: 'per Kg', market: 'Mombasa', trend: 'stable', category: 'Livestock' },
+          { id: '3', commodity: 'Red Onions', price: 110, unit: 'per Kg', market: 'Nairobi', trend: 'down', category: 'Crop' },
+          { id: '4', commodity: 'Broiler Chicken', price: 800, unit: 'per Piece', market: 'Nakuru', trend: 'up', category: 'Livestock' },
+          { id: '5', commodity: 'Irish Potatoes', price: 3800, unit: '50kg Bag', market: 'Eldoret', trend: 'up', category: 'Crop' },
+        ]
+        
+        setItems(mockData)
+      } catch (error) {
+        console.error("Market fetch failed:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchMarketData()
+  }, [])
+
+  const filteredItems = items.filter(item => 
+    item.commodity.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const formatKES = (val: number) => 
+    new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 }).format(val)
+
+  if (loading) return (
+    <div className="flex h-[60vh] items-center justify-center">
+      <Loader2 className="animate-spin text-purple-500 h-10 w-10" />
+    </div>
+  )
+
+  return (
+    <div className="p-4 space-y-8 max-w-7xl mx-auto animate-in fade-in duration-700">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <div className="flex items-center gap-2 text-purple-500 mb-2 font-black uppercase tracking-widest text-[10px]">
+            <Store className="h-4 w-4" /> Trading Floor
+          </div>
+          <h1 className="text-4xl font-black tracking-tighter uppercase text-white">
+            Market<span className="text-purple-500 text-opacity-80">place</span>
+          </h1>
+        </div>
+
+        <div className="flex gap-2 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+            <Input 
+              placeholder="Search commodities..." 
+              className="pl-10 bg-slate-900/50 border-white/10 text-white rounded-xl"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button variant="outline" className="border-white/10 bg-slate-900/50 text-white rounded-xl">
+            <Filter className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      {/* Trust Banner */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-emerald-900 p-6 rounded-2xl text-white">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="text-emerald-400 h-8 w-8" />
-          <div>
-            <p className="font-bold">Verified Origin</p>
-            <p className="text-xs text-emerald-200">Every bag is GPS-tagged</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 border-emerald-800 md:border-l md:pl-6">
-          <Leaf className="text-emerald-400 h-8 w-8" />
-          <div>
-            <p className="font-bold">Organic Inputs</p>
-            <p className="text-xs text-emerald-200">No harmful chemical pesticides</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 border-emerald-800 md:border-l md:pl-6">
-          <User className="text-emerald-400 h-8 w-8" />
-          <div>
-            <p className="font-bold">Direct Payments</p>
-            <p className="text-xs text-emerald-200">Farmer receives 95% of value</p>
-          </div>
-        </div>
-      </div>
+      {/* MARKET GRID */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filteredItems.map((item) => (
+          <Card key={item.id} className="bg-slate-900/40 border-white/5 overflow-hidden group hover:border-purple-500/30 transition-all duration-300">
+            <CardContent className="p-0">
+              <div className="p-6 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest ${
+                    item.category === 'Crop' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'
+                  }`}>
+                    {item.category}
+                  </div>
+                  <div className="flex items-center gap-1 text-[10px] text-slate-500 font-bold">
+                    <MapPin className="h-3 w-3" /> {item.market}
+                  </div>
+                </div>
 
-      {/* Product Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {marketplaceItems.map((item) => (
-          <Card key={item.id} className="overflow-hidden group cursor-pointer hover:shadow-xl transition-shadow">
-            <div className="relative h-48 bg-slate-200">
-              <img 
-                  src={item.image} 
-                  alt={item.name} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  // If the image fails to load, this sets a generic "Green Farm" background
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=800";}
-              }/>
-              <Badge className="absolute top-4 right-4 bg-white/90 text-emerald-800 backdrop-blur-sm border-none font-bold">
-                Ksh {item.price.toLocaleString()} / {item.unit}
-              </Badge>
-            </div>
-            
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-xl group-hover:text-emerald-700 transition-colors">
-                  {item.name}
-                </CardTitle>
-              </div>
-              <div className="flex items-center gap-1 text-slate-500 text-sm">
-                <MapPin size={14} /> {item.location}
-              </div>
-            </CardHeader>
+                <div>
+                  <h3 className="text-xl font-black text-white group-hover:text-purple-400 transition-colors">
+                    {item.commodity}
+                  </h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
+                    Standard {item.unit}
+                  </p>
+                </div>
 
-            <CardContent className="space-y-4">
-              <div className="bg-slate-50 p-3 rounded-lg flex justify-between items-center text-sm">
-                <span className="text-slate-500">Traceability Score</span>
-                <span className="font-bold text-emerald-600">{item.healthIndex}</span>
+                <div className="flex items-end justify-between border-t border-white/5 pt-4">
+                  <div>
+                    <p className="text-[9px] font-black text-slate-500 uppercase">Current Rate</p>
+                    <p className="text-2xl font-black text-white">{formatKES(item.price)}</p>
+                  </div>
+                  <div className={`flex items-center gap-1 text-[10px] font-black uppercase ${
+                    item.trend === 'up' ? 'text-emerald-500' : item.trend === 'down' ? 'text-rose-500' : 'text-slate-400'
+                  }`}>
+                    <TrendingUp className={`h-3 w-3 ${item.trend === 'down' ? 'rotate-180' : ''}`} />
+                    {item.trend}
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between text-xs text-slate-400">
-                <span>Harvested: {item.harvestDate}</span>
-                <span>Stock: {item.stock} units</span>
-              </div>
+              
+              <button className="w-full py-3 bg-purple-500/10 hover:bg-purple-500 text-purple-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                Analyze Price History <ArrowRight className="h-3 w-3" />
+              </button>
             </CardContent>
-
-            <CardFooter className="pt-0">
-              <Button className="w-full bg-slate-900 hover:bg-slate-800 h-11 font-bold">
-                <ShoppingBag className="mr-2 h-4 w-4" /> Add to Order
-              </Button>
-            </CardFooter>
           </Card>
         ))}
+      </div>
+
+      {/* AGENT ADVICE BOX */}
+      <div className="bg-slate-900/60 border border-purple-500/20 p-6 rounded-3xl flex flex-col md:flex-row items-center gap-6">
+        <div className="bg-purple-500/20 p-4 rounded-2xl">
+          <ShoppingBag className="text-purple-500 h-8 w-8" />
+        </div>
+        <div className="flex-1 text-center md:text-left">
+          <h4 className="text-lg font-bold text-white">SmartFarm Market Insight</h4>
+          <p className="text-sm text-slate-400">
+            Maize prices in <span className="text-white font-bold">Nairobi</span> have risen by 12% this week. Consider moving your current stock from the Eldoret storage to maximize profit margins.
+          </p>
+        </div>
+        <Button className="bg-purple-600 hover:bg-purple-700 text-white font-black uppercase tracking-widest rounded-xl px-8">
+          Sell Now
+        </Button>
       </div>
     </div>
   )

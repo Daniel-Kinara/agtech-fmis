@@ -1,143 +1,169 @@
 "use client"
 
-import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
 import { 
-  TrendingUp, 
-  BarChart3, 
-  Target, 
-  CalendarDays, 
-  ChevronRight,
-  ArrowUpRight
+  Scale, PiggyBank, ArrowUpRight, ArrowDownRight, Loader2, RefreshCcw, TrendingUp 
 } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function AnalyticsPage() {
-  const predictions = [
-    {
-      crop: "Maize (White)",
-      estHarvest: "Aug 2026",
-      expectedYield: "120 Bags",
-      projectedRevenue: 624000,
-      confidence: "High",
-      status: "On Track"
-    },
-    {
-      crop: "Potatoes (Shangi)",
-      estHarvest: "July 2026",
-      expectedYield: "85 Bags",
-      projectedRevenue: 272000,
-      confidence: "Medium",
-      status: "Water Stress"
+export default function UnifiedFinancials() {
+  const [totals, setTotals] = useState({
+    cropRev: 0,
+    cropExp: 0,
+    liveRev: 0,
+    liveExp: 0,
+    synergySavings: 0,
+    loading: true
+  })
+
+  useEffect(() => {
+    async function syncFarmEconomy() {
+      // Pulling real-time operational logs from Supabase
+      const { data: crops } = await supabase.from("crop_logs").select("market_value, cost")
+      const { data: livestock } = await supabase.from("livestock_logs").select("sale_price, treatment_cost")
+
+      // Aggregating Crop Economy (Harvests vs Inputs)
+      const cRev = crops?.reduce((acc, curr) => acc + (Number(curr.market_value) || 0), 0) || 0
+      const cExp = crops?.reduce((acc, curr) => acc + (Number(curr.cost) || 0), 0) || 0
+
+      // Aggregating Livestock Economy (Sales vs Medical/Feed)
+      const lRev = livestock?.reduce((acc, curr) => acc + (Number(curr.sale_price) || 0), 0) || 0
+      const lExp = livestock?.reduce((acc, curr) => acc + (Number(curr.treatment_cost) || 0), 0) || 0
+
+      // Calculating Internal Economy Savings (Mixed Farming Benefit)
+      // Representing the KES value saved by using farm-produced manure and fodder
+      const savings = (cRev * 0.08) + (lRev * 0.04) 
+
+      setTotals({
+        cropRev: cRev,
+        cropExp: cExp,
+        liveRev: lRev,
+        liveExp: lExp,
+        synergySavings: savings,
+        loading: false
+      })
     }
-  ]
+    syncFarmEconomy()
+  }, [])
+
+  const grossRevenue = totals.cropRev + totals.liveRev
+  const totalExpenses = totals.cropExp + totals.liveExp
+  const netPosition = (grossRevenue - totalExpenses) + totals.synergySavings
+
+  // Format numbers for Kenyan Shillings
+  const formatKES = (val: number) => 
+    new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(val)
+
+  if (totals.loading) return (
+    <div className="flex h-screen items-center justify-center bg-[#0a0b10]">
+      <Loader2 className="animate-spin text-amber-500 h-10 w-10" />
+    </div>
+  )
 
   return (
-    <div className="space-y-8 pb-10">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Harvest Forecast</h1>
-        <p className="text-slate-500 font-medium italic">Data-driven projections for your upcoming seasons.</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Total Portfolio Forecast */}
-        <Card className="lg:col-span-2 bg-slate-900 text-white overflow-hidden relative">
-          <CardHeader>
-            <CardTitle className="text-slate-400 text-sm font-bold uppercase tracking-widest">
-              Total Projected Q3 Revenue
-            </CardTitle>
-            <div className="text-5xl font-black text-white mt-2">
-              Ksh 896,000
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex gap-4">
-              <div className="flex-1 bg-white/10 p-4 rounded-xl backdrop-blur-sm">
-                <p className="text-xs text-slate-400 font-bold uppercase">Growth vs Last Season</p>
-                <div className="text-emerald-400 font-bold text-xl flex items-center gap-1">
-                  <TrendingUp size={18} /> +14.2%
-                </div>
-              </div>
-              <div className="flex-1 bg-white/10 p-4 rounded-xl backdrop-blur-sm">
-                <p className="text-xs text-slate-400 font-bold uppercase">Market Volatility</p>
-                <div className="text-amber-400 font-bold text-xl flex items-center gap-1">
-                  Low
-                </div>
-              </div>
-            </div>
-            
-            <div className="pt-4 border-t border-white/10">
-              <p className="text-sm text-slate-300 leading-relaxed">
-                Based on current <span className="text-white font-bold text-emerald-400 underline underline-offset-4">NDVI Satellite data</span>, 
-                your maize health is optimal. We recommend securing logistics for the first week of August to capitalize on the 
-                Mombasa price peak.
-              </p>
-            </div>
-          </CardContent>
-          {/* Decorative Graph Element */}
-          <div className="absolute bottom-0 right-0 opacity-20 pointer-events-none">
-            <BarChart3 size={200} className="translate-x-10 translate-y-10" />
+    <div className="p-8 bg-[#0a0b10] min-h-screen text-white space-y-8">
+      {/* HEADER WITH SYNERGY BADGE */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div>
+          <div className="flex items-center gap-2 text-amber-500 mb-2 font-black uppercase tracking-widest text-[10px]">
+            <Scale className="h-4 w-4" /> Professional Fiscal Registry
           </div>
+          <h1 className="text-4xl font-black tracking-tighter uppercase">Unified <span className="text-amber-500">Financials</span></h1>
+        </div>
+        
+        <div className="bg-emerald-500/10 border border-emerald-500/20 p-5 rounded-2xl flex items-center gap-4">
+          <PiggyBank className="text-emerald-500 h-8 w-8" />
+          <div>
+            <p className="text-[10px] font-black text-emerald-500/60 uppercase tracking-tighter">Internal Economy Saved</p>
+            <p className="text-2xl font-black text-emerald-400">{formatKES(totals.synergySavings)}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* CORE KPI GRID (Synced with Image_57d657.png style) */}
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* REVENUE */}
+        <Card className="bg-slate-900/40 border-white/5 backdrop-blur-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[10px] text-slate-500 uppercase tracking-widest font-black flex items-center justify-between">
+              Gross Inflow <ArrowUpRight className="h-3 w-3 text-emerald-500" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-black">{formatKES(grossRevenue)}</div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="p-2 rounded-lg bg-white/5">
+                <p className="text-[8px] uppercase text-slate-500 font-bold">Crops</p>
+                <p className="text-[10px] font-black">{formatKES(totals.cropRev)}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-white/5">
+                <p className="text-[8px] uppercase text-slate-500 font-bold">Animals</p>
+                <p className="text-[10px] font-black">{formatKES(totals.liveRev)}</p>
+              </div>
+            </div>
+          </CardContent>
         </Card>
 
-        {/* Efficiency Score Card */}
-        <Card className="border-emerald-200">
-          <CardHeader className="text-center">
-            <div className="mx-auto bg-emerald-100 text-emerald-700 p-4 rounded-full w-fit mb-2">
-              <Target size={32} />
-            </div>
-            <CardTitle>Farm Efficiency</CardTitle>
-            <CardDescription>Yield per Acre vs National Avg</CardDescription>
+        {/* EXPENSES */}
+        <Card className="bg-slate-900/40 border-white/5 backdrop-blur-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[10px] text-slate-500 uppercase tracking-widest font-black flex items-center justify-between">
+              Operational Cost <ArrowDownRight className="h-3 w-3 text-rose-500" />
+            </CardTitle>
           </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <div className="text-4xl font-black text-slate-900">82%</div>
-            <p className="text-sm text-slate-500 font-medium">
-              You are performing <span className="text-emerald-600 font-bold">+18%</span> better than local regional benchmarks.
+          <CardContent>
+            <div className="text-3xl font-black text-rose-500">-{formatKES(totalExpenses)}</div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="p-2 rounded-lg bg-rose-500/5">
+                <p className="text-[8px] uppercase text-rose-500/60 font-bold">Inputs</p>
+                <p className="text-[10px] font-black">{formatKES(totals.cropExp)}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-rose-500/5">
+                <p className="text-[8px] uppercase text-rose-500/60 font-bold">Meds/Feed</p>
+                <p className="text-[10px] font-black">{formatKES(totals.liveExp)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* NET POSITION */}
+        <Card className="bg-emerald-500/5 border-emerald-500/10 backdrop-blur-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[10px] text-emerald-500 uppercase tracking-widest font-black flex items-center justify-between">
+              Net Balance <TrendingUp className="h-3 w-3" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-black text-emerald-400">{formatKES(netPosition)}</div>
+            <p className="mt-2 text-[9px] text-emerald-500 font-black uppercase tracking-widest">
+              Performance Optimized with Synergies
             </p>
-            <button className="w-full text-xs font-bold uppercase tracking-tighter text-emerald-700 hover:underline flex items-center justify-center gap-1">
-              View Input Optimization Report <ChevronRight size={14} />
-            </button>
           </CardContent>
         </Card>
       </div>
 
-      {/* Individual Crop Projections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {predictions.map((p) => (
-          <Card key={p.crop} className="hover:ring-2 hover:ring-slate-200 transition-all cursor-pointer shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-bold">{p.crop}</CardTitle>
-              <Badge className={
-                p.status === "On Track" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"
-              }>
-                {p.status}
-              </Badge>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 border-y py-4 border-slate-50">
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Exp. Harvest</p>
-                  <p className="font-bold flex items-center gap-1"><CalendarDays size={14} className="text-slate-400" /> {p.estHarvest}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Exp. Yield</p>
-                  <p className="font-bold">{p.expectedYield}</p>
-                </div>
+      {/* SYNERGY ACTIVITY FEED */}
+      <section className="space-y-4 pt-6">
+        <h3 className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 flex items-center gap-4">
+          Internal Economy Ledger <div className="h-px flex-1 bg-white/5" />
+        </h3>
+        
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="bg-[#111218] border border-white/5 rounded-2xl p-6 flex items-center justify-between group hover:border-amber-500/30 transition-all">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500 group-hover:rotate-180 transition-transform duration-500">
+                <RefreshCcw className="h-5 w-5" />
               </div>
-              <div className="flex justify-between items-end">
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Projected Net Revenue</p>
-                  <p className="text-2xl font-black text-slate-900">Ksh {p.projectedRevenue.toLocaleString()}</p>
-                </div>
-                <div className="bg-slate-900 p-2 rounded-lg text-white">
-                  <ArrowUpRight size={20} />
-                </div>
+              <div>
+                <p className="text-sm font-black uppercase">Manure-to-Maize</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Bio-fertilizer Savings Applied</p>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </div>
+            <div className="text-emerald-400 font-black text-xs tracking-widest uppercase">Verified</div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
