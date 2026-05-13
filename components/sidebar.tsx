@@ -29,7 +29,21 @@ const routes = [
   { label: "Financials", icon: Wallet, href: "/dashboard/analytics", color: "text-emerald-500" },
   { label: "Mixed Farming", icon: ArrowRightLeft, href: "/dashboard/mixed", color: "text-amber-500" },
 ]
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SidebarItem = ({ icon: Icon, label, href, isLive = false }: { icon: any, label: string, href: string, isLive?: boolean }) => (
+  <Link href={href} className="group flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-slate-800">
+    <Icon className="h-5 w-5 text-slate-400 group-hover:text-amber-500" />
+    <span className="text-sm font-bold text-slate-300 group-hover:text-white uppercase tracking-wider">
+      {label}
+    </span>
+    {isLive && (
+      <span className="relative flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+      </span>
+    )}
+  </Link>
+);
 export function Sidebar() {
   const pathname = usePathname()
 
