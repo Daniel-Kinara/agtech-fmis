@@ -11,6 +11,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { AddFieldForm } from "@/components/add-field-form"
 import { FieldActivitySidebar } from "@/components/field-activity-sidebar"
+import { calculateHarvestReadiness } from "@/utils/crop-intelligence";
+import { CropIntelligenceCard } from "@/components/crops/CropIntelligenceCard";
+
 
 export default function CropsPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
