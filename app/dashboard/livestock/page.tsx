@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useState, useCallback } from "react"
+
 import { Loader2, Trash2, AlertCircle, Activity } from "lucide-react"
 import { LivestockStats } from "@/components/livestock-stats"
 import { supabase } from "@/lib/supabase"

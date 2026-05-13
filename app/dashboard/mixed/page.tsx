@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { generateUniversalReport } from "@/lib/report-generator"
 import { supabase } from "@/lib/supabase"
 import { MixedFarmingOverview } from "@/components/mixed-farming-overview"
 import { LogSynergyForm } from "@/components/log-synergy-form"
@@ -36,6 +37,14 @@ export default function MixedFarmingPage() {
     setRefreshKey(prev => prev + 1)
     fetchInventory()
   }
+  const onExport = () => {
+  generateUniversalReport({
+    title: "Mixed Farming Report",
+    livestock: inventory.livestock,
+    crops: inventory.crops,
+    efficiency: { score: "75%", label: "Self-Sufficient" }
+  })
+}
 
   const fetchInventory = async () => {
     setInventory(prev => ({ ...prev, loading: true }))
