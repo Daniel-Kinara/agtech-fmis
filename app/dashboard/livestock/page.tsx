@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react"
 
-import { Loader2, Trash2, AlertCircle, Activity } from "lucide-react"
+import { Loader2, Trash2, AlertCircle, Activity, ChevronRight } from "lucide-react"
 import { LivestockStats } from "@/components/livestock-stats"
 import { supabase } from "@/lib/supabase"
 import { AddLivestockForm } from "@/components/add-livestock-form"
@@ -26,6 +26,13 @@ export default function LivestockPage() {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchLivestock() }, [fetchLivestock])
+  
+  const deleteField = async (e:React.MouseEvent, id:string, name:string)=>{
+    e.stopPropagation()
+    if (!confirm(`Delete "${name}"?`))return 
+    await supabase.from("livestock").delete().eq("id",id)
+    fetchLivestock()
+  }
 
   return (
     <div className="flex-col flex min-h-screen bg-slate-50/50 dark:bg-slate-950 transition-colors duration-300">
@@ -82,7 +89,12 @@ export default function LivestockPage() {
                         {animal.weight ? `${animal.weight}kg` : "-"}
                       </TableCell>
                       <TableCell>
-                        <Trash2 className="h-4 w-4 text-slate-300 dark:text-slate-600 hover:text-red-500" />
+                        <div className="flex items-center gap-2">
+                          <button onClick={(e)=> deleteField(e,animal.id,animal.tag_number)} className="p-2 text-slate-300 dark:text-slate-600 hover:text-red-600 transition-colors">
+                            <Trash2 className="h-4 w-4"/>
+                          </button>
+                          <ChevronRight className="h-4 w-4 text-slate-300 dark:text-slate-600" />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
