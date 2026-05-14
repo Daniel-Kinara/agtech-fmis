@@ -52,7 +52,7 @@ export function Sidebar() {
       
       {/* 1. Header & Scrollable Nav Area */}
       <div className="px-6 py-6 flex-1 overflow-y-auto scrollbar-hide">
-        <Link href="/selection" className="flex items-center gap-2 mb-8 group">
+        <Link href="/" className="flex items-center gap-2 mb-8 group">
           <div className="bg-amber-500 p-1.5 rounded-lg shadow-lg group-hover:rotate-3 transition-transform">
             <Cloud className="h-5 w-5 text-white" />
           </div>
